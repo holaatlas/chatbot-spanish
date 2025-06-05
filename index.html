@@ -4,9 +4,28 @@
   <meta charset="UTF-8" />
   <title>Chatbot - Introducciones y Saludos</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin-top: 40px; padding: 20px; }
-    button { padding: 10px 20px; font-size: 18px; margin: 10px; }
-    #status { margin-top: 20px; font-size: 16px; color: darkgreen; white-space: pre-line; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 10px;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 16px;
+      color: darkgreen;
+      white-space: pre-line;
+    }
+    #voice-used {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
   </style>
 </head>
 <body>
@@ -15,10 +34,12 @@
   <p>Presiona el botón para comenzar a hablar. El chatbot te hará varias preguntas.</p>
   <button id="startBtn">🎤 Hablar</button>
   <div id="status">Pregunta: ¿Cómo te llamas?</div>
+  <div id="voice-used"></div>
 
   <script>
     const startBtn = document.getElementById('startBtn');
     const statusDiv = document.getElementById('status');
+    const voiceUsedDiv = document.getElementById('voice-used');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let currentQuestion = 0;
 
@@ -30,15 +51,12 @@
       "¿Te gusta aprender español?"
     ];
 
-    // Función para que el chatbot hable las preguntas
     function speak(text) {
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'es-ES';
 
         const voices = speechSynthesis.getVoices();
-
-        // 1. Voz femenina de España
         let selectedVoice = voices.find(voice =>
           voice.lang === 'es-ES' &&
           (voice.name.toLowerCase().includes('laura') ||
@@ -47,7 +65,6 @@
            voice.name.toLowerCase().includes('google'))
         );
 
-        // 2. Si no hay, voz de Latinoamérica
         if (!selectedVoice) {
           selectedVoice = voices.find(voice =>
             voice.lang.startsWith('es-') &&
@@ -58,23 +75,65 @@
           );
         }
 
-        // 3. Si no hay, cualquier voz en español
         if (!selectedVoice) {
           selectedVoice = voices.find(voice => voice.lang.startsWith('es'));
         }
 
         if (selectedVoice) {
           utterance.voice = selectedVoice;
-          utterance.rate = 0.95; // Velocidad de voz un poco más lenta
+          utterance.rate = 0.95;
+          console.log("🗣️ Voz seleccionada:", selectedVoice.name);
+
+          let flag = "🌍";
+          if (selectedVoice.lang === "es-ES") flag = "🇪🇸";
+          else if (selectedVoice.lang === "es-MX") flag = "🇲🇽";
+          else if (selectedVoice.lang === "es-AR") flag = "🇦🇷";
+          else if (selectedVoice.lang === "es-CO") flag = "🇨🇴";
+          else if (selectedVoice.lang === "es-US") flag = "🇺🇸";
+
+          voiceUsedDiv.textContent = `${flag} Voz usada: ${selectedVoice.name}`;
         }
 
         speechSynthesis.speak(utterance);
       }
     }
 
-    // Lanzar primera pregunta cuando se cargan las voces
     window.speechSynthesis.onvoiceschanged = () => {
       speak(questions[currentQuestion]);
+
+      const voices = speechSynthesis.getVoices();
+      let selectedVoice = voices.find(voice =>
+        voice.lang === 'es-ES' &&
+        (voice.name.toLowerCase().includes('laura') ||
+         voice.name.toLowerCase().includes('helena') ||
+         voice.name.toLowerCase().includes('female') ||
+         voice.name.toLowerCase().includes('google'))
+      );
+
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice =>
+          voice.lang.startsWith('es-') &&
+          (voice.name.toLowerCase().includes('sofia') ||
+           voice.name.toLowerCase().includes('hilda') ||
+           voice.name.toLowerCase().includes('america') ||
+           voice.name.toLowerCase().includes('latino'))
+        );
+      }
+
+      if (!selectedVoice) {
+        selectedVoice = voices.find(voice => voice.lang.startsWith('es'));
+      }
+
+      if (selectedVoice) {
+        let flag = "🌍";
+        if (selectedVoice.lang === "es-ES") flag = "🇪🇸";
+        else if (selectedVoice.lang === "es-MX") flag = "🇲🇽";
+        else if (selectedVoice.lang === "es-AR") flag = "🇦🇷";
+        else if (selectedVoice.lang === "es-CO") flag = "🇨🇴";
+        else if (selectedVoice.lang === "es-US") flag = "🇺🇸";
+
+        voiceUsedDiv.textContent = `${flag} Voz usada: ${selectedVoice.name}`;
+      }
     };
 
     if (!SpeechRecognition) {
@@ -129,6 +188,5 @@
       });
     }
   </script>
-
 </body>
 </html>
