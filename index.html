@@ -4,11 +4,15 @@
   <meta charset="UTF-8" />
   <title>Chatbot - Introducciones y Saludos</title>
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+    * {
+      box-sizing: border-box;
+    }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: #f4f6fa;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(to bottom right, #f9fafe, #e6f0ff);
       margin: 0;
       padding: 0;
       display: flex;
@@ -19,59 +23,61 @@
     }
 
     header {
-      background-color: #0066cc;
+      background-color: #00b4d8;
       width: 100%;
       color: white;
-      padding: 20px 0;
+      padding: 24px 0;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    main {
-      width: 100%;
-      max-width: 600px;
-      background-color: white;
-      margin: 40px 20px;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
 
     h1 {
       font-size: 28px;
-      margin-bottom: 10px;
+      margin: 0;
+    }
+
+    main {
+      width: 100%;
+      max-width: 620px;
+      background-color: white;
+      margin: 40px 20px;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+      position: relative;
     }
 
     p {
       font-size: 16px;
       color: #555;
+      margin-top: 0;
     }
 
     button {
-      background-color: #0066cc;
+      background-color: #00b4d8;
       color: white;
       border: none;
-      padding: 12px 24px;
+      padding: 14px 28px;
       font-size: 16px;
       font-weight: 600;
-      border-radius: 30px;
+      border-radius: 50px;
       cursor: pointer;
       margin-top: 20px;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s ease, transform 0.2s;
     }
 
     button:hover {
-      background-color: #004da8;
+      background-color: #0096c7;
+      transform: scale(1.05);
     }
 
     #status {
       margin-top: 30px;
       font-size: 18px;
-      text-align: left;
       white-space: pre-line;
-      background-color: #e6f0ff;
+      background-color: #f0f8ff;
       padding: 16px;
-      border-left: 4px solid #0066cc;
+      border-left: 5px solid #00b4d8;
       border-radius: 8px;
     }
 
@@ -79,7 +85,6 @@
       margin-top: 10px;
       font-size: 14px;
       color: #777;
-      text-align: left;
     }
 
     footer {
@@ -89,6 +94,26 @@
       font-size: 12px;
       color: #aaa;
     }
+
+    .progress-bar {
+      height: 16px;
+      background-color: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%;
+      background-color: #00b4d8;
+      transition: width 0.5s ease;
+    }
+
+    .emoji {
+      font-size: 22px;
+      margin-right: 8px;
+    }
   </style>
 </head>
 <body>
@@ -97,7 +122,8 @@
   </header>
 
   <main>
-    <p>Presiona el botón para comenzar a hablar. El chatbot te hará varias preguntas.</p>
+    <p><span class="emoji">👉</span>Presiona el botón para comenzar a hablar. El chatbot te hará preguntas.</p>
+    <div class="progress-bar"><div class="progress" id="progressFill"></div></div>
     <button id="startBtn">🎤 Hablar</button>
     <div id="status">Pregunta: ¿Cómo te llamas?</div>
     <div id="voice-used"></div>
@@ -111,6 +137,7 @@
     const startBtn = document.getElementById('startBtn');
     const statusDiv = document.getElementById('status');
     const voiceUsedDiv = document.getElementById('voice-used');
+    const progressFill = document.getElementById('progressFill');
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let currentQuestion = 0;
 
@@ -121,6 +148,11 @@
       "¿Cómo estás hoy?",
       "¿Te gusta aprender español?"
     ];
+
+    function updateProgressBar() {
+      const percentage = ((currentQuestion) / questions.length) * 100;
+      progressFill.style.width = percentage + '%';
+    }
 
     function speak(text) {
       if ('speechSynthesis' in window) {
@@ -171,40 +203,7 @@
 
     window.speechSynthesis.onvoiceschanged = () => {
       speak(questions[currentQuestion]);
-
-      const voices = speechSynthesis.getVoices();
-      let selectedVoice = voices.find(voice =>
-        voice.lang === 'es-ES' &&
-        (voice.name.toLowerCase().includes('laura') ||
-         voice.name.toLowerCase().includes('helena') ||
-         voice.name.toLowerCase().includes('female') ||
-         voice.name.toLowerCase().includes('google'))
-      );
-
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice =>
-          voice.lang.startsWith('es-') &&
-          (voice.name.toLowerCase().includes('sofia') ||
-           voice.name.toLowerCase().includes('hilda') ||
-           voice.name.toLowerCase().includes('america') ||
-           voice.name.toLowerCase().includes('latino'))
-        );
-      }
-
-      if (!selectedVoice) {
-        selectedVoice = voices.find(voice => voice.lang.startsWith('es'));
-      }
-
-      if (selectedVoice) {
-        let flag = "🌍";
-        if (selectedVoice.lang === "es-ES") flag = "🇪🇸";
-        else if (selectedVoice.lang === "es-MX") flag = "🇲🇽";
-        else if (selectedVoice.lang === "es-AR") flag = "🇦🇷";
-        else if (selectedVoice.lang === "es-CO") flag = "🇨🇴";
-        else if (selectedVoice.lang === "es-US") flag = "🇺🇸";
-
-        voiceUsedDiv.textContent = `${flag} Voz usada: ${selectedVoice.name}`;
-      }
+      updateProgressBar();
     };
 
     if (!SpeechRecognition) {
@@ -229,13 +228,13 @@
           respuesta += "¡Mucho gusto! 😊";
           currentQuestion++;
         } else if (currentQuestion === 1 && (transcript.includes("soy de") || transcript.includes("vengo de"))) {
-          respuesta += "¡Qué interesante!";
+          respuesta += "¡Qué interesante! 🌎";
           currentQuestion++;
         } else if (currentQuestion === 2 && transcript.includes("años")) {
-          respuesta += "¡Gracias por compartirlo!";
+          respuesta += "¡Gracias por compartirlo! 🎉";
           currentQuestion++;
         } else if (currentQuestion === 3 && (transcript.includes("bien") || transcript.includes("mal") || transcript.includes("más o menos"))) {
-          respuesta += "Gracias por decirme cómo estás.";
+          respuesta += "Gracias por decirme cómo estás. 💬";
           currentQuestion++;
         } else if (currentQuestion === 4 && (transcript.includes("sí") || transcript.includes("me gusta"))) {
           respuesta += "¡Me alegra! 😊";
@@ -243,6 +242,8 @@
         } else {
           respuesta += "¿Puedes repetir tu respuesta usando vocabulario del módulo?";
         }
+
+        updateProgressBar();
 
         if (currentQuestion < questions.length) {
           respuesta += "\n\nSiguiente pregunta: " + questions[currentQuestion];
