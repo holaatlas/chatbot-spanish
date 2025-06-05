@@ -35,18 +35,53 @@
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'es-ES';
+
+        const voices = speechSynthesis.getVoices();
+
+        // 1. Voz femenina de España
+        let selectedVoice = voices.find(voice =>
+          voice.lang === 'es-ES' &&
+          (voice.name.toLowerCase().includes('laura') ||
+           voice.name.toLowerCase().includes('helena') ||
+           voice.name.toLowerCase().includes('female') ||
+           voice.name.toLowerCase().includes('google'))
+        );
+
+        // 2. Si no hay, voz de Latinoamérica
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice =>
+            voice.lang.startsWith('es-') &&
+            (voice.name.toLowerCase().includes('sofia') ||
+             voice.name.toLowerCase().includes('hilda') ||
+             voice.name.toLowerCase().includes('america') ||
+             voice.name.toLowerCase().includes('latino'))
+          );
+        }
+
+        // 3. Si no hay, cualquier voz en español
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => voice.lang.startsWith('es'));
+        }
+
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+          utterance.rate = 0.95; // Velocidad de voz un poco más lenta
+        }
+
         speechSynthesis.speak(utterance);
       }
     }
+
+    // Lanzar primera pregunta cuando se cargan las voces
+    window.speechSynthesis.onvoiceschanged = () => {
+      speak(questions[currentQuestion]);
+    };
 
     if (!SpeechRecognition) {
       statusDiv.textContent = "Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.";
     } else {
       const recognition = new SpeechRecognition();
       recognition.lang = 'es-ES';
-
-      // Al cargar la página, que lea la primera pregunta
-      speak(questions[currentQuestion]);
 
       recognition.addEventListener('start', () => {
         statusDiv.textContent += '\n🎙️ Escuchando...';
