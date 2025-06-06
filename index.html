@@ -174,8 +174,8 @@
           speak("Gracias. ¿Cuál es tu correo electrónico?");
           step++;
         } else {
-          addMessage("Hmm, eso no parece un número de teléfono válido. Intenta de nuevo.", 'bot');
-          speak("Eso no parece un número de teléfono válido. Intenta de nuevo.");
+          addMessage("Tu número debe tener al menos 6 dígitos. Intenta escribirlo con números en español. 😊", 'bot');
+          speak("Tu número debe tener al menos seis dígitos. Intenta escribirlo con números en español.");
         }
       } else if (step === 3) {
         if (cleaned.includes("@")) {
@@ -183,8 +183,8 @@
           speak("¡Perfecto! Fue un placer hablar contigo. ¡Hasta luego!");
           step++;
         } else {
-          addMessage("Eso no parece un correo electrónico válido. Intenta de nuevo.", 'bot');
-          speak("Eso no parece un correo electrónico válido. Intenta de nuevo.");
+          addMessage("Recuerda que un correo electrónico debe incluir el símbolo arroba (@). Por ejemplo: nombre@gmail.com 📧", 'bot');
+          speak("Recuerda que un correo electrónico debe incluir el símbolo arroba. Por ejemplo: nombre arroba gmail punto com.");
         }
       } else {
         addMessage("Ya hemos terminado por ahora. 😊", 'bot');
