@@ -135,12 +135,12 @@
 
     let step = 0;
 
-    function speak(text) {
+    function speak(text, lang = 'es-ES') {
       if (!voices.length) voices = synth.getVoices();
       const utter = new SpeechSynthesisUtterance(text);
-      const selectedVoice = voices.find(v => v.lang === 'es-ES' && v.name.includes('Google')) || voices[0];
+      const selectedVoice = voices.find(v => v.lang === lang && v.name.includes('Google')) || voices.find(v => v.lang === lang) || voices[0];
       utter.voice = selectedVoice;
-      console.log("Voz seleccionada:", selectedVoice.name);
+      console.log("Selected voice:", selectedVoice.name);
       synth.speak(utter);
     }
 
@@ -154,9 +154,11 @@
 
     function handleResponse(input) {
       const cleaned = input.trim().toLowerCase();
+      feedback.innerText = ''; // Reset feedback
+
       if (cleaned.includes("tonto") || cleaned.includes("malo")) {
         addMessage("Por favor, usa un lenguaje apropiado. 🙏", 'bot');
-        speak("Por favor, usa un lenguaje apropiado.");
+        speak("Please use appropriate language.", 'en-US');
         return;
       }
 
@@ -174,8 +176,10 @@
           speak("Gracias. ¿Cuál es tu correo electrónico?");
           step++;
         } else {
-          addMessage("Tu número debe tener al menos 6 dígitos. Intenta escribirlo con números en español. 😊", 'bot');
-          speak("Tu número debe tener al menos seis dígitos. Intenta escribirlo con números en español.");
+          addMessage("Ese número no es válido.", 'bot');
+          const msg = "Your phone number must have at least 6 digits. Please try again.";
+          feedback.innerText = msg;
+          speak(msg, 'en-US');
         }
       } else if (step === 3) {
         if (cleaned.includes("@")) {
@@ -183,8 +187,10 @@
           speak("¡Perfecto! Fue un placer hablar contigo. ¡Hasta luego!");
           step++;
         } else {
-          addMessage("Recuerda que un correo electrónico debe incluir el símbolo arroba (@). Por ejemplo: nombre@gmail.com 📧", 'bot');
-          speak("Recuerda que un correo electrónico debe incluir el símbolo arroba. Por ejemplo: nombre arroba gmail punto com.");
+          addMessage("Hmm... eso no parece un correo válido.", 'bot');
+          const msg = "Your email must include '@'. Example: name@gmail.com";
+          feedback.innerText = msg;
+          speak(msg, 'en-US');
         }
       } else {
         addMessage("Ya hemos terminado por ahora. 😊", 'bot');
@@ -218,7 +224,8 @@
       };
 
       recognition.onerror = (event) => {
-        feedback.innerText = "Error al usar el micrófono. Intenta de nuevo.";
+        feedback.innerText = "Microphone error. Please try again.";
+        speak("Microphone error. Please try again.", 'en-US');
       };
     };
 
