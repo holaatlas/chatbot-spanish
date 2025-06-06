@@ -133,7 +133,9 @@
 
     let step = 0;
     let userName = "";
-    let selectedVoice;
+    let userAge = null;
+    let userOrigin = "";
+    let userAdj = "";
 
     // Load voices and select Spanish female voice from Spain
     function loadVoices() {
@@ -188,17 +190,38 @@
       const inputLower = inputText.trim().toLowerCase();
       feedback.textContent = ''; // reset feedback
 
-      // Filtro palabras obscenas
+      // Filter bad words
       if (inputLower.includes("tonto") || inputLower.includes("malo")) {
         addMessage("Por favor, usa un lenguaje apropiado. 🙏", 'bot');
         speak("Please use appropriate language.", 'en-US');
         return;
       }
 
+      // Respond to "y tú?" anytime
+      if (inputLower.includes("y tú") || inputLower.includes("¿y tú?") || inputLower === "y tú") {
+        switch (step) {
+          case 1:
+            addMessage("Soy de España. ¿Y tú?", 'bot');
+            speak("Soy de España. ¿Y tú?");
+            return;
+          case 2:
+            addMessage("Tengo 25 años. ¿Y tú?", 'bot');
+            speak("Tengo veinticinco años. ¿Y tú?");
+            return;
+          case 3:
+            addMessage("Soy paciente y creativo. ¿Y tú?", 'bot');
+            speak("Soy paciente y creativo. ¿Y tú?");
+            return;
+          default:
+            addMessage("¡Qué bueno saber de ti! 😊", 'bot');
+            speak("¡Qué bueno saber de ti!");
+            return;
+        }
+      }
+
       if (step === 0) {
         // Extraer nombre
         let name = "";
-
         const matchLlamo = inputLower.match(/me llamo (\w+)/);
         if (matchLlamo && matchLlamo[1]) {
           name = matchLlamo[1];
@@ -210,38 +233,53 @@
             name = inputText.split(" ")[0];
           }
         }
-
         userName = capitalize(name);
-        addMessage("¡Mucho gusto, " + userName + "! ¿De dónde eres?", 'bot');
-        speak("¡Mucho gusto, " + userName + "! ¿De dónde eres?");
+        addMessage(`¡Mucho gusto, ${userName}! ¿De dónde eres?`, 'bot');
+        speak(`¡Mucho gusto, ${userName}! ¿De dónde eres?`);
         step++;
       } else if (step === 1) {
-        addMessage("¡Qué interesante! ¿Cuál es tu número de teléfono? (Al menos 6 dígitos)", 'bot');
-        speak("¡Qué interesante! ¿Cuál es tu número de teléfono?");
-        step++;
-      } else if (step === 2) {
-        const digitsOnly = inputLower.replace(/\D/g, "");
-        if (digitsOnly.length >= 6) {
-          addMessage("Gracias. ¿Cuál es tu correo electrónico?", 'bot');
-          speak("Gracias. ¿Cuál es tu correo electrónico?");
+        // Respuesta lugar de origen
+        // Esperamos algo parecido a "soy de ..."
+
+        if (inputLower.startsWith("soy de ")) {
+          userOrigin = inputText.slice(7).trim();
+          addMessage(`¡Genial! ¿Cuántos años tienes?`, 'bot');
+          speak("¡Genial! ¿Cuántos años tienes?");
           step++;
         } else {
-          addMessage("Ese número no es válido.", 'bot');
-          const msg = "Your phone number must have at least 6 digits. Please try again.";
-          feedback.textContent = msg;
-          speak(msg, 'en-US');
+          feedback.textContent = "Por favor, responde con 'Soy de [lugar]'.";
+        }
+      } else if (step === 2) {
+        // Edad: esperar número entre 1 y 120 (simplificando)
+        const ageMatch = inputLower.match(/\b(\d{1,3})\b/);
+        if (ageMatch) {
+          const ageNum = parseInt(ageMatch[1], 10);
+          if (ageNum >= 1 && ageNum <= 120) {
+            userAge = ageNum;
+            addMessage(`Perfecto, tienes ${userAge} años. Ahora, ¿cómo te describirías con un adjetivo? Por ejemplo: paciente, creativo, responsable...`, 'bot');
+            speak(`Perfecto, tienes ${userAge} años. Ahora, ¿cómo te describirías con un adjetivo? Por ejemplo: paciente, creativo, responsable...`);
+            step++;
+          } else {
+            feedback.textContent = "Por favor, escribe un número válido de edad (entre 1 y 120).";
+          }
+        } else {
+          feedback.textContent = "Por favor, escribe tu edad con un número.";
         }
       } else if (step === 3) {
-        if (inputLower.includes("@")) {
-          addMessage("¡Perfecto! Fue un placer hablar contigo. ¡Hasta luego!", 'bot');
-          speak("¡Perfecto! Fue un placer hablar contigo. ¡Hasta luego!");
-          step++;
-        } else {
-          addMessage("Hmm... eso no parece un correo válido.", 'bot');
-          const msg = "Your email must include '@'. Example: name@gmail.com";
-          feedback.textContent = msg;
-          speak(msg, 'en-US');
+        // Adjetivo simple para describirse (no valida exhaustivamente)
+        userAdj = inputText.trim();
+        if (userAdj.length < 2) {
+          feedback.textContent = "Por favor, escribe un adjetivo válido.";
+          return;
         }
+        addMessage(`¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?`, 'bot');
+        speak(`¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?`);
+        step++;
+      } else if (step === 4) {
+        // Gustos en tiempo libre (respuesta libre)
+        addMessage(`¡Gracias por compartir, ${userName}! Fue un placer conversar contigo. ¡Hasta luego!`, 'bot');
+        speak(`¡Gracias por compartir, ${userName}! Fue un placer conversar contigo. ¡Hasta luego!`);
+        step++;
       } else {
         addMessage("Ya hemos terminado por ahora. 😊", 'bot');
         speak("Ya hemos terminado por ahora.");
@@ -263,7 +301,7 @@
       }
     });
 
-    // Micrófono
+    // Microphone
     let recognition;
     if ('webkitSpeechRecognition' in window) {
       recognition = new webkitSpeechRecognition();
@@ -288,7 +326,7 @@
       if (recognition) recognition.start();
     });
 
-    // Mensaje inicial
+    // Initial greeting
     window.onload = () => {
       addMessage("¡Hola! Soy tu asistente para practicar español. ¿Cómo te llamas?", 'bot');
       speak("¡Hola! Soy tu asistente para practicar español. ¿Cómo te llamas?");
