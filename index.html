@@ -1,48 +1,56 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Chatbot - Atlas Language Academy</title>
+  <meta charset="UTF-8">
+  <title>Chatbot Español - Módulo 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
-
     body {
-      font-family: 'Poppins', sans-serif;
-      background-color: #ffffff;
-      color: #0A2540;
-      max-width: 700px;
+      font-family: 'Roboto Slab', serif;
+      background-color: #F3EFE3;
+      color: #A84339;
+      max-width: 800px;
       margin: 40px auto;
       padding: 30px;
       border-radius: 10px;
-      box-shadow: 0 0 15px rgba(10, 37, 64, 0.1);
+      box-shadow: 0 0 15px rgba(171, 109, 90, 0.2);
     }
 
-    h1 {
+    header {
       text-align: center;
-      color: #0077B6;
-      margin-bottom: 25px;
-      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    header img {
+      max-width: 160px;
+      margin-bottom: 10px;
+    }
+
+    header h1 {
+      color: #CB9180;
+      font-size: 1.8rem;
+      margin: 0;
     }
 
     #chat {
-      background-color: #F5F8FA;
+      background-color: #ffffff;
       border-radius: 10px;
       padding: 20px;
       min-height: 320px;
-      box-shadow: inset 0 0 10px rgba(0, 119, 182, 0.08);
+      box-shadow: inset 0 0 10px rgba(203, 145, 128, 0.15);
       overflow-y: auto;
       margin-bottom: 20px;
     }
 
     .bot-msg {
-      color: #0077B6;
+      color: #CB9180;
       margin: 12px 0;
-      font-weight: 600;
+      font-weight: 700;
     }
 
     .user-msg {
-      color: #0A2540;
+      color: #A84339;
       text-align: right;
       margin: 12px 0;
       font-style: italic;
@@ -57,13 +65,13 @@
       flex-grow: 1;
       padding: 10px 15px;
       font-size: 1rem;
-      border: 2px solid #0077B6;
+      border: 2px solid #CB9180;
       border-radius: 8px;
       outline: none;
     }
 
     #send-btn, #mic-btn {
-      background-color: #0077B6;
+      background-color: #A84339;
       color: white;
       border: none;
       padding: 10px 15px;
@@ -74,199 +82,150 @@
     }
 
     #send-btn:hover, #mic-btn:hover {
-      background-color: #023E8A;
+      background-color: #CB9180;
     }
 
     #feedback {
-      color: #D32F2F;
+      color: #A84339;
       margin-top: 12px;
       min-height: 20px;
       font-weight: 600;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.85rem;
+      color: #CB9180;
     }
   </style>
 </head>
 <body>
 
-<h1>Chatbot de Bienvenida</h1>
-<div id="chat"></div>
+  <header>
+    <img src="images/Atlas_Color.png" alt="Logo Atlas Language Academy">
+    <h1>Chatbot de práctica – Módulo 1: Introducciones</h1>
+  </header>
 
-<div id="input-area">
-  <input id="user-input" type="text" placeholder="Escribe tu respuesta aquí..." autocomplete="off" />
-  <button id="send-btn">Enviar</button>
-  <button id="mic-btn" title="Hablar con el chatbot">🎤</button>
-</div>
+  <div id="chat">
+    <div class="bot-msg">¡Hola! ¿Cómo te llamas?</div>
+  </div>
 
-<div id="feedback"></div>
+  <div id="input-area">
+    <input type="text" id="user-input" placeholder="Escribe tu respuesta o usa el micrófono...">
+    <button id="mic-btn">🎤</button>
+    <button id="send-btn">Enviar</button>
+  </div>
 
-<script>
-  const chat = document.getElementById("chat");
-  const userInput = document.getElementById("user-input");
-  const sendBtn = document.getElementById("send-btn");
-  const micBtn = document.getElementById("mic-btn");
-  const feedbackDiv = document.getElementById("feedback");
+  <div id="feedback"></div>
 
-  const synth = window.speechSynthesis;
-  let selectedVoice = null;
+  <footer>
+    © 2025 Atlas Language Academy. Todos los derechos reservados.
+  </footer>
 
-  function speak(text) {
-    if (!selectedVoice) return;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = selectedVoice;
-    utterance.lang = 'es-ES';
-    synth.speak(utterance);
-  }
+  <script>
+    const chat = document.getElementById('chat');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const micBtn = document.getElementById('mic-btn');
+    const feedback = document.getElementById('feedback');
 
-  function addMessage(text, sender) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    div.className = sender === "bot" ? "bot-msg" : "user-msg";
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
+    const synth = window.speechSynthesis;
+    let voices = [];
 
-  let step = 0;
-  let studentName = "";
+    let step = 0;
 
-  const conversation = [
-    {
-      question: "¡Hola! ¿Cómo te llamas?",
-      validator: (input) => {
-        const lower = input.toLowerCase();
-        if (lower.includes("me llamo") || lower.includes("soy") || lower.includes("mi nombre es")) {
-          const words = input.trim().split(" ");
-          studentName = words[words.length - 1];
-          return { valid: true };
-        }
-        return { valid: false, feedback: "Di: 'Me llamo Ana' o 'Soy Ana'." };
-      }
-    },
-    {
-      question: () => `Mucho gusto, ${studentName}. ¿De dónde eres?`,
-      validator: (input) => {
-        const lower = input.toLowerCase();
-        return lower.includes("soy de") || lower.includes("vengo de")
-          ? { valid: true }
-          : { valid: false, feedback: "Ejemplo: 'Soy de México'." };
-      }
-    },
-    {
-      question: "¿Cómo estás hoy?",
-      validator: (input) => {
-        const validPhrases = ["estoy bien", "estoy mal", "estoy más o menos", "bien", "mal"];
-        return validPhrases.some(p => input.toLowerCase().includes(p))
-          ? { valid: true }
-          : { valid: false, feedback: "Puedes decir: 'Estoy bien', 'Estoy mal'..." };
-      }
-    },
-    {
-      question: "¿Te gusta aprender español?",
-      validator: (input) => {
-        return input.toLowerCase().includes("sí") || input.toLowerCase().includes("no")
-          ? { valid: true }
-          : { valid: false, feedback: "Responde con 'Sí' o 'No'." };
-      }
-    },
-    {
-      question: () => `Gracias por compartir, ${studentName}. ¿Quieres seguir practicando?`,
-      validator: (input) => {
-        const lower = input.toLowerCase();
-        if (lower.includes("sí")) return { valid: true };
-        if (lower.includes("no")) return { valid: true, end: true };
-        return { valid: false, feedback: "Responde 'Sí' o 'No'." };
-      }
-    },
-    {
-      question: "¡Genial! ¿Cuál es tu color favorito?",
-      validator: () => ({ valid: true })
-    },
-    {
-      question: () => `¡Fue un placer, ${studentName}! Hasta luego.`,
-      validator: null
-    }
-  ];
-
-  function showQuestion() {
-    feedbackDiv.textContent = "";
-    let current = conversation[step];
-    let qText = typeof current.question === "function" ? current.question() : current.question;
-    addMessage(qText, "bot");
-    speak(qText);
-  }
-
-  function checkAnswer(input) {
-    let current = conversation[step];
-    if (!current.validator) {
-      addMessage("Gracias por practicar. ¡Hasta luego!", "bot");
-      return;
+    function speak(text) {
+      if (!voices.length) voices = synth.getVoices();
+      const utter = new SpeechSynthesisUtterance(text);
+      const selectedVoice = voices.find(v => v.lang === 'es-ES' && v.name.includes('Google')) || voices[0];
+      utter.voice = selectedVoice;
+      console.log("Voz seleccionada:", selectedVoice.name);
+      synth.speak(utter);
     }
 
-    let result = current.validator(input);
-    if (result.valid) {
-      addMessage(input, "user");
-      if (result.end) {
-        addMessage("Gracias por practicar. ¡Nos vemos!", "bot");
-        speak("Gracias por practicar. ¡Nos vemos!");
+    function addMessage(text, sender) {
+      const msg = document.createElement('div');
+      msg.className = sender === 'user' ? 'user-msg' : 'bot-msg';
+      msg.innerText = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function handleResponse(input) {
+      const cleaned = input.trim().toLowerCase();
+      if (cleaned.includes("tonto") || cleaned.includes("malo")) {
+        addMessage("Por favor, usa un lenguaje apropiado. 🙏", 'bot');
+        speak("Por favor, usa un lenguaje apropiado.");
         return;
       }
-      step++;
-      setTimeout(() => {
-        if (step < conversation.length) {
-          showQuestion();
+
+      if (step === 0) {
+        addMessage("¡Mucho gusto, " + input + "! ¿De dónde eres?", 'bot');
+        speak("¡Mucho gusto, " + input + "! ¿De dónde eres?");
+        step++;
+      } else if (step === 1) {
+        addMessage("¡Qué interesante! ¿Cuál es tu número de teléfono?", 'bot');
+        speak("¡Qué interesante! ¿Cuál es tu número de teléfono?");
+        step++;
+      } else if (step === 2) {
+        if (/[\d]{6,}/.test(cleaned)) {
+          addMessage("Gracias. ¿Cuál es tu correo electrónico?", 'bot');
+          speak("Gracias. ¿Cuál es tu correo electrónico?");
+          step++;
+        } else {
+          addMessage("Hmm, eso no parece un número de teléfono válido. Intenta de nuevo.", 'bot');
+          speak("Eso no parece un número de teléfono válido. Intenta de nuevo.");
         }
-      }, 700);
-      feedbackDiv.textContent = "";
-    } else {
-      feedbackDiv.textContent = result.feedback;
-      addMessage(result.feedback, "bot");
-      speak(result.feedback);
-    }
-  }
-
-  sendBtn.addEventListener("click", () => {
-    let input = userInput.value.trim();
-    if (input) {
-      checkAnswer(input);
-      userInput.value = "";
-    }
-  });
-
-  userInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") sendBtn.click();
-  });
-
-  micBtn.addEventListener("click", () => {
-    if (!("webkitSpeechRecognition" in window || "SpeechRecognition" in window)) {
-      alert("Tu navegador no soporta reconocimiento de voz.");
-      return;
+      } else if (step === 3) {
+        if (cleaned.includes("@")) {
+          addMessage("¡Perfecto! Fue un placer hablar contigo. ¡Hasta luego!", 'bot');
+          speak("¡Perfecto! Fue un placer hablar contigo. ¡Hasta luego!");
+          step++;
+        } else {
+          addMessage("Eso no parece un correo electrónico válido. Intenta de nuevo.", 'bot');
+          speak("Eso no parece un correo electrónico válido. Intenta de nuevo.");
+        }
+      } else {
+        addMessage("Ya hemos terminado por ahora. 😊", 'bot');
+        speak("Ya hemos terminado por ahora.");
+      }
     }
 
-    const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-    recognition.lang = "es-ES";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    recognition.start();
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      checkAnswer(transcript);
+    sendBtn.onclick = () => {
+      const input = userInput.value;
+      if (!input) return;
+      addMessage(input, 'user');
+      userInput.value = '';
+      handleResponse(input);
     };
 
-    recognition.onerror = () => {
-      alert("Error al reconocer tu voz. Intenta de nuevo.");
+    userInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") {
+        sendBtn.click();
+      }
+    });
+
+    micBtn.onclick = () => {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = 'es-ES';
+      recognition.start();
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userInput.value = transcript;
+        sendBtn.click();
+      };
+
+      recognition.onerror = (event) => {
+        feedback.innerText = "Error al usar el micrófono. Intenta de nuevo.";
+      };
     };
-  });
 
-  window.speechSynthesis.onvoiceschanged = () => {
-    const voices = window.speechSynthesis.getVoices();
-    selectedVoice =
-      voices.find(v => v.lang === "es-ES" && /female|maria|mona|paola/i.test(v.name)) ||
-      voices.find(v => v.lang === "es-ES");
-
-    console.log("Voz seleccionada:", selectedVoice?.name);
-    showQuestion();
-  };
-</script>
+    window.speechSynthesis.onvoiceschanged = () => {
+      voices = synth.getVoices();
+    };
+  </script>
 
 </body>
 </html>
