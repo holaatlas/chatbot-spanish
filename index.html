@@ -1,160 +1,195 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Atlas Spanish Chatbot</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chatbot Español</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
       font-family: 'Roboto Slab', serif;
+      margin: 0;
+      padding: 0;
       background-color: #F3EFE3;
-      color: #333;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: flex-start;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
+      height: 100vh;
     }
     header {
+      background-color: #A84339;
+      color: white;
+      width: 100%;
+      padding: 1rem;
       text-align: center;
     }
-    header img {
-      width: 100px;
-      margin-bottom: 10px;
-    }
-    h1 {
-      color: #A84339;
-    }
     #chat-container {
-      background-color: #ffffff;
+      background-color: white;
       border: 2px solid #CB9180;
-      border-radius: 12px;
-      width: 100%;
-      max-width: 600px;
-      padding: 20px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      border-radius: 10px;
+      width: 90%;
+      max-width: 500px;
+      height: 70vh;
+      display: flex;
+      flex-direction: column;
+      margin-top: 1rem;
+      overflow: hidden;
     }
-    #chat-box {
-      height: 300px;
+    #chat {
+      flex-grow: 1;
       overflow-y: auto;
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-bottom: 10px;
-      background-color: #fff;
+      padding: 1rem;
     }
-    .user-msg {
-      text-align: right;
-      color: #A84339;
+    .message {
+      margin: 0.5rem 0;
+      padding: 0.75rem 1rem;
+      border-radius: 20px;
+      max-width: 75%;
     }
-    .bot-msg {
-      text-align: left;
-      color: #333;
-    }
-    #speak-btn {
+    .bot {
       background-color: #CB9180;
       color: white;
-      padding: 10px 20px;
+      align-self: flex-start;
+    }
+    .user {
+      background-color: #A84339;
+      color: white;
+      align-self: flex-end;
+    }
+    #input-container {
+      display: flex;
+      align-items: center;
+      padding: 0.5rem;
+      border-top: 1px solid #ccc;
+      background-color: #F3EFE3;
+    }
+    #input-text {
+      flex-grow: 1;
+      padding: 0.5rem;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+    #mic-button {
+      background-color: #CB9180;
       border: none;
-      border-radius: 6px;
+      color: white;
+      padding: 0.5rem 1rem;
+      margin-left: 0.5rem;
+      border-radius: 50%;
       cursor: pointer;
     }
-    #voice-selection {
-      margin: 10px 0;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
+    #voice-selector {
+      margin: 1rem;
     }
     .flag-btn {
-      border: none;
       background: none;
+      border: none;
       cursor: pointer;
-      font-size: 24px;
+      margin: 0 5px;
+    }
+    .flag-btn img {
+      width: 32px;
+      height: auto;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="Atlas_Color.png" alt="Atlas Logo">
-    <h1>Spanish Chatbot - Atlas Language Academy</h1>
+    <h1>Atlas Chatbot</h1>
   </header>
-
-  <div id="voice-selection">
-    <button class="flag-btn" onclick="setVoice('es-ES')">🇪🇸</button>
-    <button class="flag-btn" onclick="setVoice('es-MX')">🇲🇽</button>
+  <div id="voice-selector">
+    <button class="flag-btn" onclick="selectAccent('Spain')"><img src="https://flagcdn.com/es.svg" alt="Spain"></button>
+    <button class="flag-btn" onclick="selectAccent('Mexico')"><img src="https://flagcdn.com/mx.svg" alt="Mexico"></button>
+    <button class="flag-btn" onclick="selectAccent('Argentina')"><img src="https://flagcdn.com/ar.svg" alt="Argentina"></button>
   </div>
-
   <div id="chat-container">
-    <div id="chat-box"></div>
-    <button id="speak-btn">🎙️ Speak</button>
+    <div id="chat"></div>
+    <div id="input-container">
+      <input type="text" id="input-text" placeholder="Escribe o habla aquí..." />
+      <button id="mic-button" onclick="startRecognition()">🎤</button>
+    </div>
   </div>
 
   <script>
-    const chatBox = document.getElementById('chat-box');
-    const speakBtn = document.getElementById('speak-btn');
-    let selectedLang = 'es-ES';
+    const chat = document.getElementById("chat");
+    const inputText = document.getElementById("input-text");
     let voices = [];
+    let selectedVoice = null;
 
-    function setVoice(lang) {
-      selectedLang = lang;
-      console.log("Selected voice language:", lang);
+    function addMessage(text, sender) {
+      const message = document.createElement("div");
+      message.className = `message ${sender}`;
+      message.textContent = text;
+      chat.appendChild(message);
+      chat.scrollTop = chat.scrollHeight;
     }
 
     function speak(text) {
+      if (!selectedVoice) return;
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = selectedLang;
-      utterance.voice = voices.find(voice => voice.lang === selectedLang && voice.name.includes('Female')) || voices.find(v => v.lang === selectedLang);
+      utterance.voice = selectedVoice;
       speechSynthesis.speak(utterance);
     }
 
-    function showMessage(message, sender = 'bot') {
-      const msgDiv = document.createElement('div');
-      msgDiv.className = sender === 'user' ? 'user-msg' : 'bot-msg';
-      msgDiv.textContent = message;
-      chatBox.appendChild(msgDiv);
-      chatBox.scrollTop = chatBox.scrollHeight;
-      if (sender === 'bot') speak(message);
+    function selectAccent(accent) {
+      selectedVoice = voices.find(v => v.name.toLowerCase().includes(accent.toLowerCase()));
+      console.log("Selected voice:", selectedVoice?.name);
     }
 
-    function handleInput(text) {
-      showMessage(text, 'user');
-      const lowerText = text.toLowerCase();
+    function initVoices() {
+      voices = speechSynthesis.getVoices();
+      selectedVoice = voices.find(v => v.lang === "es-ES");
+    }
 
-      if (lowerText.includes('hola')) {
-        showMessage('¡Hola! ¿Cómo estás?');
-      } else if (lowerText.includes('me llamo')) {
-        showMessage('¡Mucho gusto! ¿De dónde eres?');
-      } else if (lowerText.includes('soy de')) {
-        showMessage('¡Qué bien! ¿Cuántos años tienes?');
-      } else if (lowerText.includes('años')) {
-        showMessage('¡Gracias por compartir! ¿Quieres seguir practicando?');
-      } else if (lowerText.includes('sí') || lowerText.includes('claro')) {
-        showMessage('Perfecto. ¿Cómo se dice "thank you" en español?');
-      } else if (lowerText.includes('gracias')) {
-        showMessage('¡Muy bien!');
+    speechSynthesis.onvoiceschanged = initVoices;
+
+    function getBotResponse(input) {
+      input = input.toLowerCase();
+      if (input.includes("hola")) {
+        return "¡Hola! ¿Cómo estás?";
+      } else if (input.includes("bien")) {
+        return "¡Me alegro! ¿Cómo te llamas?";
+      } else if (input.includes("me llamo")) {
+        return "¡Mucho gusto! ¿De dónde eres?";
+      } else if (input.includes("soy de")) {
+        return "¡Qué bien! ¿Cuántos años tienes?";
+      } else if (input.includes("años")) {
+        return "Gracias por compartirlo. ¿Cómo se dice 'book' en español?";
+      } else if (input.includes("libro")) {
+        return "¡Correcto! ¿Quieres seguir practicando?";
+      } else if (input.includes("sí") || input.includes("si")) {
+        return "Perfecto. ¿Qué día es hoy?";
+      } else if (input.match(/lunes|martes|miércoles|jueves|viernes|sábado|domingo/)) {
+        return "¡Muy bien! ¿Qué mes es?";
       } else {
-        showMessage("I'm not sure I understood that. Try using words from the lesson.");
+        return "I didn't understand. Please try again using vocabulary from the lesson.";
       }
     }
 
-    speakBtn.addEventListener('click', () => {
-      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = selectedLang;
-      recognition.start();
-      recognition.onresult = event => {
-        const transcript = event.results[0][0].transcript;
-        handleInput(transcript);
-      };
+    inputText.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        const userInput = inputText.value;
+        inputText.value = "";
+        addMessage(userInput, "user");
+        const botResponse = getBotResponse(userInput);
+        addMessage(botResponse, "bot");
+        speak(botResponse);
+      }
     });
 
-    window.speechSynthesis.onvoiceschanged = () => {
-      voices = speechSynthesis.getVoices();
-    };
-
-    // Start the conversation
-    showMessage('¡Hola! ¿Cómo te llamas?');
+    function startRecognition() {
+      const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "es-ES";
+      recognition.start();
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript;
+        inputText.value = transcript;
+        const eventEnter = new KeyboardEvent("keydown", { key: "Enter" });
+        inputText.dispatchEvent(eventEnter);
+      };
+    }
   </script>
 </body>
 </html>
