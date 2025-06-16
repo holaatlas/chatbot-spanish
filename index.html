@@ -312,12 +312,12 @@
       if (recognition) recognition.start();
     });
 
-    window.onload = () => {
-      selectVoice().then(() => {
-        respond("¡Hola! Soy Atlas. ¿Cómo te llamas?");
-        input.focus();
-      });
-    };
+    window.onload = async () => {
+  await loadVoices();     // Asegúrate de que las voces están cargadas
+  await selectVoice();    // Selecciona la voz correcta
+  respond("¡Hola! Soy Atlas. ¿Cómo te llamas?");
+  input.focus();
+};
   </script>
 </body>
 </html>
