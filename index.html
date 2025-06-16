@@ -201,6 +201,7 @@
 
     function speak(text) {
       if (!selectedVoice) return;
+      console.log("Voz seleccionada:", selectedVoice);
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = selectedVoice;
       utterance.lang = selectedAccent;
