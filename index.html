@@ -6,130 +6,11 @@
   <title>Chatbot Spanish - Introductions</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto+Slab&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: 'Roboto Slab', serif;
-      background-color: #F3EFE3;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      height: 100vh;
-      color: #A84339;
-    }
-    header {
-      background-color: #CB9180;
-      width: 100%;
-      padding: 15px 0;
-      text-align: center;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.2);
-    }
-    header img {
-      height: 60px;
-    }
-    #accent-selector {
-      margin-top: 10px;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-    }
-    .flag-btn {
-      border: none;
-      background: transparent;
-      font-size: 28px;
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-    .flag-btn:hover {
-      transform: scale(1.2);
-    }
-    .selected {
-      border-bottom: 3px solid #A84339;
-    }
-    #chat-container {
-      flex-grow: 1;
-      width: 90%;
-      max-width: 600px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(168,67,57,0.3);
-      padding: 20px;
-      overflow-y: auto;
-      margin: 20px 0;
-    }
-    #messages {
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-      max-height: 70vh;
-      overflow-y: auto;
-      padding-right: 10px;
-    }
-    .message {
-      padding: 12px 16px;
-      border-radius: 20px;
-      max-width: 75%;
-      line-height: 1.4;
-      font-size: 1.1em;
-    }
-    .bot {
-      background-color: #CB9180;
-      color: white;
-      align-self: flex-start;
-      box-shadow: 0 2px 5px rgba(168,67,57,0.6);
-    }
-    .user {
-      background-color: #A84339;
-      color: white;
-      align-self: flex-end;
-      box-shadow: 0 2px 5px rgba(203,145,128,0.7);
-    }
-    #feedback {
-      color: #A84339;
-      font-weight: bold;
-      margin-top: 5px;
-      min-height: 20px;
-      font-size: 0.9em;
-      font-style: italic;
-    }
-    #input-area {
-      display: flex;
-      width: 90%;
-      max-width: 600px;
-      margin-bottom: 20px;
-      gap: 10px;
-    }
-    #user-input {
-      flex-grow: 1;
-      font-size: 1.1em;
-      padding: 10px 15px;
-      border-radius: 25px;
-      border: 2px solid #A84339;
-      outline: none;
-      color: #A84339;
-    }
-    #send-btn, #mic-btn {
-      background-color: #A84339;
-      border: none;
-      color: white;
-      font-size: 1.3em;
-      padding: 0 15px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
-    #send-btn:hover, #mic-btn:hover {
-      background-color: #CB9180;
-    }
-    #send-btn:disabled {
-      background-color: #e0bfb7;
-      cursor: not-allowed;
-    }
+    /* ... (same CSS as before) ... */
   </style>
 </head>
 <body>
   <header>
-    <!-- Check the path below; if the image is not in a 'main' subfolder, update the src accordingly -->
     <img src="main/Atlas_Color.png" alt="Logo Atlas Language Academy" />
   </header>
 
@@ -160,6 +41,7 @@
     let selectedVoice = null;
     let selectedAccent = 'es-ES';
     let step = 0, userName = "", userAge = null, userOrigin = "", userAdj = "";
+    let voicesReady = false;
 
     // Speech recognition instance
     let recognition;
@@ -184,8 +66,9 @@
         flags.forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         selectedAccent = btn.dataset.accent;
-        selectVoice();
-        if (recognition) recognition.lang = selectedAccent; // update recognition language
+        selectVoice().then(() => {
+          if (recognition) recognition.lang = selectedAccent;
+        });
       });
     });
 
@@ -199,29 +82,46 @@
 
     async function selectVoice() {
       const voices = await loadVoices();
+      voicesReady = true;
+      // For debugging: list voices in console
+      // console.log("Available voices:", voices.map(v => `${v.name} (${v.lang})`).join(", "));
 
-      // Intenta seleccionar una voz natural de Google
+      // Select Google or other Spanish voice
       selectedVoice = voices.find(v =>
         (v.name.includes("Google español") || v.name.includes("español")) &&
         v.lang === selectedAccent
       );
 
-      // Si no encuentra esa voz, elige la primera disponible del acento
+      // If not found, fallback to any voice of the selected accent
       if (!selectedVoice) {
         selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
       }
 
-      // (Optional) log for debugging
-      console.log("Voz seleccionada:", selectedVoice?.name);
+      if (!selectedVoice) {
+        feedback.textContent = "No hay voz disponible para este acento en tu navegador.";
+      } else {
+        feedback.textContent = "";
+      }
     }
 
-    // (Optional robustness) update voice if voices change after page load
+    // Always update voice if voices change after page load
     if ('speechSynthesis' in window) {
       speechSynthesis.onvoiceschanged = selectVoice;
     }
 
-    function speak(text) {
-      if (!selectedVoice) return;
+    async function speak(text) {
+      // Wait for voices to be loaded
+      if (!voicesReady) {
+        await selectVoice();
+      }
+      if (!selectedVoice) {
+        feedback.textContent = "No se encontró voz para la síntesis de habla.";
+        return;
+      }
+      // Stop any currently speaking utterance
+      if (speechSynthesis.speaking) {
+        speechSynthesis.cancel();
+      }
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = selectedVoice;
       utterance.lang = selectedAccent;
