@@ -132,9 +132,9 @@
     <img src="images/Atlas_Color.png" alt="Logo Atlas Language Academy" />
   </header>
 
+  <!-- Only one accent button for Spain -->
   <div id="accent-selector">
     <button class="flag-btn selected" data-accent="es-ES">🇪🇸</button>
-    <button class="flag-btn" data-accent="es-MX">🇲🇽</button>
   </div>
 
   <div id="chat-container" aria-live="polite" aria-atomic="true">
@@ -160,15 +160,7 @@
     let selectedAccent = 'es-ES';
     let step = 0, userName = "", userAge = null, userOrigin = "", userAdj = "";
 
-    flags.forEach(btn => {
-      btn.addEventListener('click', () => {
-        flags.forEach(b => b.classList.remove('selected'));
-        btn.classList.add('selected');
-        selectedAccent = btn.dataset.accent;
-        selectVoice();
-      });
-    });
-
+    // Voice loading and selection
     function loadVoices() {
       return new Promise(resolve => {
         let voices = speechSynthesis.getVoices();
@@ -178,32 +170,29 @@
     }
 
     async function selectVoice() {
-      return new Promise(resolve => {
-        const load = () => {
-          const voices = speechSynthesis.getVoices();
-          if (!voices.length) {
-            setTimeout(load, 100);
-            return;
-          }
-          if (selectedAccent === 'es-ES') {
-            selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'es-ES') ||
-                  voices.find(v => v.lang === 'es-ES');
-          } else if (selectedAccent === 'es-ES') {
-            selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'es-MX') ||
-                  voices.find(v => v.lang === 'es-MX');
-          }
-          if (!selectedVoice) {
-            selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
-          }
-          resolve();
-        };
-        load();
-      });
+      const voices = await loadVoices();
+      // Prefer Google natural Spanish (Spain) voice
+      selectedVoice =
+        voices.find(v => v.lang === "es-ES" && v.name.includes("Google español")) ||
+        voices.find(v => v.lang === "es-ES") ||
+        null;
+
+      if (!selectedVoice) {
+        feedback.textContent = "No hay voz natural de España disponible en tu navegador.";
+      } else {
+        feedback.textContent = "";
+      }
+      return selectedVoice;
     }
 
-    function speak(text) {
-      if (!selectedVoice) return;
-      console.log("Voz seleccionada:", selectedVoice);
+    async function speak(text) {
+      if (!selectedVoice) await selectVoice();
+      if (!selectedVoice) {
+        feedback.textContent = "No se encontró voz para la síntesis de habla.";
+        return;
+      }
+      // Stop any currently speaking utterance
+      if (speechSynthesis.speaking) speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.voice = selectedVoice;
       utterance.lang = selectedAccent;
@@ -222,70 +211,70 @@
       return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
-    function respond(text) {
+    async function respond(text) {
       addMessage(text, 'bot');
-      speak(text);
+      await speak(text);
     }
 
-    function handleResponse(text) {
+    async function handleResponse(text) {
       const inputLower = text.trim().toLowerCase();
       feedback.textContent = "";
 
       if (inputLower.includes("tonto") || inputLower.includes("malo")) {
-        respond("Por favor, usa un lenguaje apropiado. 🙏");
+        await respond("Por favor, usa un lenguaje apropiado. 🙏");
         return;
       }
 
       if (inputLower.includes("y tú")) {
         if (step === 1) return respond("Soy de Madrid.");
         if (step === 2) return respond("Tengo veinticinco años.");
-        if (step === 3) return respond("Soy inteligente y creativa.");
+        if (step === 3) return respond("Soy inteligente y creativo.");
         return respond("¡Qué bien! 😊");
       }
 
       if (step === 0) {
         const name = text.match(/me llamo (\w+)/i)?.[1] || text.match(/soy (\w+)/i)?.[1] || text.split(" ")[0];
         userName = capitalize(name);
-        respond(`¡Mucho gusto, ${userName}! ¿De dónde eres?`);
+        await respond(`¡Mucho gusto, ${userName}! ¿De dónde eres?`);
         step++;
       } else if (step === 1) {
         if (inputLower.startsWith("soy de ")) {
           userOrigin = text.slice(7).trim();
-          respond("¡Genial! ¿Cuántos años tienes?");
+          await respond("¡Genial! ¿Cuántos años tienes?");
           step++;
         } else {
-          feedback.textContent = "Please reply with 'Soy de [lugar]'.";
+          feedback.textContent = "Por favor, responde con 'Soy de [lugar]'.";
         }
       } else if (step === 2) {
         const age = text.match(/\b(\d{1,3})\b/);
         if (age && +age[1] >= 1 && +age[1] <= 120) {
           userAge = +age[1];
-          respond(`Perfecto, tienes ${userAge} años. ¿Cómo te describirías con un adjetivo?`);
+          await respond(`Perfecto, tienes ${userAge} años. ¿Cómo te describirías con un adjetivo?`);
           step++;
         } else {
-          feedback.textContent = "Please enter a valid number between 1 and 120.";
+          feedback.textContent = "Por favor, introduce un número válido entre 1 y 120.";
         }
       } else if (step === 3) {
         userAdj = text.trim();
         if (userAdj.length < 2) {
-          feedback.textContent = "Please enter a valid adjective.";
+          feedback.textContent = "Por favor, introduce un adjetivo válido.";
           return;
         }
-        respond(`¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?`);
+        await respond(`¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?`);
         step++;
       } else if (step === 4) {
-        respond(`¡Gracias por compartir, ${userName}! Encantada de conocerte. ¡Hasta luego!`);
+        await respond(`¡Gracias por compartir, ${userName}! Encantado de conocerte. ¡Hasta luego!`);
         step++;
       } else {
-        respond("Recarga la página para practicar de nuevo. 😊");
+        await respond("Recarga la página para practicar de nuevo. 😊");
       }
     }
 
-    sendBtn.addEventListener('click', () => {
+    sendBtn.addEventListener('click', async () => {
       const userText = input.value.trim();
       if (!userText) return;
       addMessage(userText, 'user');
-      handleResponse(userText);
+      await handleResponse(userText);
       input.value = '';
       input.focus();
     });
@@ -294,6 +283,18 @@
       if (e.key === 'Enter') sendBtn.click();
     });
 
+    // Only one accent selector, but keep for extensibility
+    flags.forEach(btn => {
+      btn.addEventListener('click', async () => {
+        flags.forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selectedAccent = btn.dataset.accent;
+        await selectVoice();
+        if (recognition) recognition.lang = selectedAccent;
+      });
+    });
+
+    // Speech recognition setup
     let recognition;
     if ('webkitSpeechRecognition' in window) {
       recognition = new webkitSpeechRecognition();
@@ -307,19 +308,24 @@
       };
     } else {
       micBtn.disabled = true;
-      micBtn.title = "Speech recognition not supported.";
+      micBtn.title = "El reconocimiento de voz no está soportado.";
     }
 
     micBtn.addEventListener('click', () => {
       if (recognition) recognition.start();
     });
 
+    // Ensure voices are loaded and selected before starting
     window.onload = async () => {
-  await loadVoices();     // Asegúrate de que las voces están cargadas
-  await selectVoice();    // Selecciona la voz correcta
-  respond("¡Hola! Soy Atlas. ¿Cómo te llamas?");
-  input.focus();
-};
+      await selectVoice();
+      await respond("¡Hola! Soy Atlas. ¿Cómo te llamas?");
+      input.focus();
+    };
+
+    // Also re-select voice if voices list changes (e.g. after voices load)
+    if ('speechSynthesis' in window) {
+      speechSynthesis.onvoiceschanged = selectVoice;
+    }
   </script>
 </body>
 </html>
