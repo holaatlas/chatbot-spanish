@@ -178,40 +178,34 @@
     }
 
     async function selectVoice() {
-  return new Promise(resolve => {
-    const load = () => {
-      const voices = speechSynthesis.getVoices();
-      if (!voices.length) {
-        setTimeout(load, 100); // espera y vuelve a intentar
-        return;
-      }
-
-      // Intenta seleccionar una voz femenina de Google (más natural)
-      if (selectedAccent === 'es-ES') {
-        selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-ES');
-      } else if (selectedAccent === 'es-MX') {
-        selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-MX');
-      }
-
-      // Si no encuentra voz de Google, selecciona cualquiera del idioma
-      if (!selectedVoice) {
-        selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
-      }
-
-      resolve();
-    };
-
-    load();
-  });
-}
+      return new Promise(resolve => {
+        const load = () => {
+          const voices = speechSynthesis.getVoices();
+          if (!voices.length) {
+            setTimeout(load, 100);
+            return;
+          }
+          if (selectedAccent === 'es-ES') {
+            selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-ES');
+          } else if (selectedAccent === 'es-MX') {
+            selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-MX');
+          }
+          if (!selectedVoice) {
+            selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
+          }
+          resolve();
+        };
+        load();
+      });
+    }
 
     function speak(text) {
-  if (!selectedVoice) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.voice = selectedVoice;
-  utterance.lang = selectedAccent;
-  speechSynthesis.speak(utterance);
-}
+      if (!selectedVoice) return;
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedAccent;
+      speechSynthesis.speak(utterance);
+    }
 
     function addMessage(text, sender) {
       const msgDiv = document.createElement('div');
@@ -225,13 +219,17 @@
       return s.charAt(0).toUpperCase() + s.slice(1);
     }
 
+    function respond(text) {
+      addMessage(text, 'bot');
+      speak(text);
+    }
+
     function handleResponse(text) {
       const inputLower = text.trim().toLowerCase();
       feedback.textContent = "";
 
       if (inputLower.includes("tonto") || inputLower.includes("malo")) {
-        addMessage("Por favor, usa un lenguaje apropiado. 🙏", 'bot');
-        speak("Please use appropriate language.");
+        respond("Por favor, usa un lenguaje apropiado. 🙏");
         return;
       }
 
@@ -259,7 +257,7 @@
         const age = text.match(/\b(\d{1,3})\b/);
         if (age && +age[1] >= 1 && +age[1] <= 120) {
           userAge = +age[1];
-          respond(Perfecto, tienes ${userAge} años. ¿Cómo te describirías con un adjetivo?);
+          respond(`Perfecto, tienes ${userAge} años. ¿Cómo te describirías con un adjetivo?`);
           step++;
         } else {
           feedback.textContent = "Please enter a valid number between 1 and 120.";
@@ -270,19 +268,14 @@
           feedback.textContent = "Please enter a valid adjective.";
           return;
         }
-        respond(¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?);
+        respond(`¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?`);
         step++;
       } else if (step === 4) {
-        respond(¡Gracias por compartir, ${userName}! Encantada de conocerte. ¡Hasta luego!);
+        respond(`¡Gracias por compartir, ${userName}! Encantada de conocerte. ¡Hasta luego!`);
         step++;
       } else {
-        respond("Refresh the page for more practice. 😊");
+        respond("Recarga la página para practicar de nuevo. 😊");
       }
-    }
-
-    function respond(text) {
-      addMessage(text, 'bot');
-      speak(text);
     }
 
     sendBtn.addEventListener('click', () => {
