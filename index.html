@@ -178,18 +178,40 @@
     }
 
     async function selectVoice() {
-      const voices = await loadVoices();
-      selectedVoice = voices.find(v => v.lang === selectedAccent && v.name.toLowerCase().includes('female')) ||
-                      voices.find(v => v.lang === selectedAccent) || voices[0];
-    }
+  return new Promise(resolve => {
+    const load = () => {
+      const voices = speechSynthesis.getVoices();
+      if (!voices.length) {
+        setTimeout(load, 100); // espera y vuelve a intentar
+        return;
+      }
+
+      // Intenta seleccionar una voz femenina de Google (más natural)
+      if (selectedAccent === 'es-ES') {
+        selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-ES');
+      } else if (selectedAccent === 'es-MX') {
+        selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-MX');
+      }
+
+      // Si no encuentra voz de Google, selecciona cualquiera del idioma
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
+      }
+
+      resolve();
+    };
+
+    load();
+  });
+}
 
     function speak(text) {
-      if (!selectedVoice) return;
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.voice = selectedVoice;
-      utterance.lang = selectedAccent;
-      speechSynthesis.speak(utterance);
-    }
+  if (!selectedVoice) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.voice = selectedVoice;
+  utterance.lang = selectedAccent;
+  speechSynthesis.speak(utterance);
+}
 
     function addMessage(text, sender) {
       const msgDiv = document.createElement('div');
