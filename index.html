@@ -178,19 +178,22 @@
     }
 
      async function selectVoice() {
-    const voices = await loadVoices();
+  const voices = await loadVoices();
 
-    // Intenta seleccionar una voz femenina de Google, que suena más natural
-    if (selectedAccent === 'es-ES') {
-      selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-ES');
-    } else if (selectedAccent === 'es-MX') {
-      selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-MX');
-    }
+  // Intenta seleccionar una voz natural de Google
+  selectedVoice = voices.find(v =>
+    (v.name.includes("Google español") || v.name.includes("español")) &&
+    v.lang === selectedAccent
+  );
 
-    // Si no encuentra la voz deseada, elige la primera disponible del acento
-    if (!selectedVoice) {
-      selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
-    }
+  // Si no encuentra esa voz, elige la primera disponible del acento
+  if (!selectedVoice) {
+    selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
+  }
+
+  console.log("Voz seleccionada:", selectedVoice?.name);
+}
+
   }
     function speak(text) {
       if (!selectedVoice) return;
