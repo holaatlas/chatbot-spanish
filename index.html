@@ -245,7 +245,7 @@
       if (step === 0) {
         const name = text.match(/me llamo (\w+)/i)?.[1] || text.match(/soy (\w+)/i)?.[1] || text.split(" ")[0];
         userName = capitalize(name);
-        respond(¡Mucho gusto, ${userName}! ¿De dónde eres?);
+        respond(`¡Mucho gusto, ${userName}! ¿De dónde eres?`);
         step++;
       } else if (step === 1) {
         if (inputLower.startsWith("soy de ")) {
