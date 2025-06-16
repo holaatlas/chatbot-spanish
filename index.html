@@ -177,12 +177,21 @@
       });
     }
 
-    async function selectVoice() {
-      const voices = await loadVoices();
-      selectedVoice = voices.find(v => v.lang === selectedAccent && v.name.toLowerCase().includes('female')) ||
-                      voices.find(v => v.lang === selectedAccent) || voices[0];
+     async function selectVoice() {
+    const voices = await loadVoices();
+
+    // Intenta seleccionar una voz femenina de Google, que suena más natural
+    if (selectedAccent === 'es-ES') {
+      selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-ES');
+    } else if (selectedAccent === 'es-MX') {
+      selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-MX');
     }
 
+    // Si no encuentra la voz deseada, elige la primera disponible del acento
+    if (!selectedVoice) {
+      selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
+    }
+  }
     function speak(text) {
       if (!selectedVoice) return;
       const utterance = new SpeechSynthesisUtterance(text);
