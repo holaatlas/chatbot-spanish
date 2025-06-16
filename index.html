@@ -129,6 +129,7 @@
 </head>
 <body>
   <header>
+    <!-- Check the path below; if the image is not in a 'main' subfolder, update the src accordingly -->
     <img src="main/Atlas_Color.png" alt="Logo Atlas Language Academy" />
   </header>
 
@@ -160,12 +161,31 @@
     let selectedAccent = 'es-ES';
     let step = 0, userName = "", userAge = null, userOrigin = "", userAdj = "";
 
+    // Speech recognition instance
+    let recognition;
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.lang = selectedAccent;
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onresult = e => {
+        input.value = e.results[0][0].transcript;
+        sendBtn.click();
+      };
+    } else {
+      micBtn.disabled = true;
+      micBtn.title = "Speech recognition not supported.";
+    }
+
+    // Accent selector
     flags.forEach(btn => {
       btn.addEventListener('click', () => {
         flags.forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         selectedAccent = btn.dataset.accent;
         selectVoice();
+        if (recognition) recognition.lang = selectedAccent; // update recognition language
       });
     });
 
@@ -177,24 +197,29 @@
       });
     }
 
-       async function selectVoice() {
-    const voices = await loadVoices();
+    async function selectVoice() {
+      const voices = await loadVoices();
 
-    // Intenta seleccionar una voz natural de Google
-    selectedVoice = voices.find(v =>
-      (v.name.includes("Google español") || v.name.includes("español")) &&
-      v.lang === selectedAccent
-    );
+      // Intenta seleccionar una voz natural de Google
+      selectedVoice = voices.find(v =>
+        (v.name.includes("Google español") || v.name.includes("español")) &&
+        v.lang === selectedAccent
+      );
 
-    // Si no encuentra esa voz, elige la primera disponible del acento
-    if (!selectedVoice) {
-      selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
+      // Si no encuentra esa voz, elige la primera disponible del acento
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
+      }
+
+      // (Optional) log for debugging
+      console.log("Voz seleccionada:", selectedVoice?.name);
     }
 
-  console.log("Voz seleccionada:", selectedVoice?.name);
-}
+    // (Optional robustness) update voice if voices change after page load
+    if ('speechSynthesis' in window) {
+      speechSynthesis.onvoiceschanged = selectVoice;
+    }
 
-  }
     function speak(text) {
       if (!selectedVoice) return;
       const utterance = new SpeechSynthesisUtterance(text);
@@ -287,22 +312,6 @@
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter') sendBtn.click();
     });
-
-    let recognition;
-    if ('webkitSpeechRecognition' in window) {
-      recognition = new webkitSpeechRecognition();
-      recognition.lang = selectedAccent;
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onresult = e => {
-        input.value = e.results[0][0].transcript;
-        sendBtn.click();
-      };
-    } else {
-      micBtn.disabled = true;
-      micBtn.title = "Speech recognition not supported.";
-    }
 
     micBtn.addEventListener('click', () => {
       if (recognition) recognition.start();
