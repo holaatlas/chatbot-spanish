@@ -186,9 +186,11 @@
             return;
           }
           if (selectedAccent === 'es-ES') {
-            selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-ES');
-          } else if (selectedAccent === 'es-MX') {
-            selectedVoice = voices.find(v => v.name.includes('Google español') && v.lang === 'es-MX');
+            selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'es-ES') ||
+                  voices.find(v => v.lang === 'es-ES');
+          } else if (selectedAccent === 'es-ES') {
+            selectedVoice = voices.find(v => v.name.includes('Google') && v.lang === 'es-MX') ||
+                  voices.find(v => v.lang === 'es-MX');
           }
           if (!selectedVoice) {
             selectedVoice = voices.find(v => v.lang === selectedAccent) || voices[0];
