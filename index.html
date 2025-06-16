@@ -214,10 +214,10 @@
       }
 
       if (inputLower.includes("y tú")) {
-        if (step === 1) return respond("Soy de España. ¿Y tú?");
-        if (step === 2) return respond("Tengo veinticinco años. ¿Y tú?");
-        if (step === 3) return respond("Soy paciente y creativo. ¿Y tú?");
-        return respond("¡Qué bueno saber de ti! 😊");
+        if (step === 1) return respond("Soy de Madrid.");
+        if (step === 2) return respond("Tengo veinticinco años.");
+        if (step === 3) return respond("Soy inteligente y creativa.");
+        return respond("¡Qué bien! 😊");
       }
 
       if (step === 0) {
@@ -251,10 +251,10 @@
         respond(¡Muy bien! Entonces, eres ${userAdj}. ¿Qué te gusta hacer en tu tiempo libre?);
         step++;
       } else if (step === 4) {
-        respond(¡Gracias por compartir, ${userName}! Fue un placer conversar contigo. ¡Hasta luego!);
+        respond(¡Gracias por compartir, ${userName}! Encantada de conocerte. ¡Hasta luego!);
         step++;
       } else {
-        respond("Ya hemos terminado por ahora. 😊");
+        respond("Refresh the page for more practice. 😊");
       }
     }
 
@@ -298,7 +298,7 @@
 
     window.onload = () => {
       selectVoice().then(() => {
-        respond("¡Hola! Soy tu asistente para practicar español. ¿Cómo te llamas?");
+        respond("¡Hola! Soy Atlas. ¿Cómo te llamas?");
         input.focus();
       });
     };
